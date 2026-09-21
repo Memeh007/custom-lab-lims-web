@@ -8,6 +8,8 @@ import io
 from pathlib import Path
 from typing import Any, Optional
 
+import time
+
 import requests
 
 TIMEOUT = 30
@@ -156,38 +158,117 @@ def uniprot_fetch(accession: str) -> dict[str, Any]:
     }
 
 
-# ── PubChem ─────────────────────────────────────────────────────
-def pubchem_name_to_smiles(name: str) -> Optional[str]:
-    """Resolve compound name to SMILES via PubChem PUG REST."""
+# ── PubChem / CACTUS ────────────────────────────────────────────
+def _pubchem_properties(name: str) -> Optional[dict[str, Any]]:
+    """Fetch PubChem property table row with light retries."""
     name = name.strip()
     if not name:
         return None
-    # Request several property aliases — PubChem field names vary by API version
     url = (
         "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/"
         f"{requests.utils.quote(name)}/property/"
-        "CanonicalSMILES,IsomericSMILES,ConnectivitySMILES,SMILES,MolecularWeight/JSON"
+        "CanonicalSMILES,IsomericSMILES,ConnectivitySMILES,SMILES,"
+        "MolecularWeight,MolecularFormula/JSON"
     )
-    r = requests.get(url, headers=UA, timeout=TIMEOUT)
-    if r.status_code != 200:
+    last_err: Optional[Exception] = None
+    for attempt in range(3):
+        try:
+            r = requests.get(url, headers=UA, timeout=TIMEOUT)
+            if r.status_code == 404:
+                return None
+            if r.status_code in (429, 500, 502, 503, 504):
+                time.sleep(0.6 * (attempt + 1))
+                continue
+            if r.status_code != 200:
+                return None
+            props = (r.json().get("PropertyTable") or {}).get("Properties") or []
+            return props[0] if props else None
+        except requests.RequestException as e:
+            last_err = e
+            time.sleep(0.6 * (attempt + 1))
+    if last_err:
+        raise RuntimeError(f"PubChem request failed: {last_err}") from last_err
+    return None
+
+
+def cactus_name_to_smiles(name: str) -> Optional[str]:
+    """NIH CACTUS Chemical Identifier Resolver fallback."""
+    name = name.strip()
+    if not name:
         return None
-    props = (r.json().get("PropertyTable") or {}).get("Properties") or []
+    url = (
+        "https://cactus.nci.nih.gov/chemical/structure/"
+        f"{requests.utils.quote(name)}/smiles"
+    )
+    try:
+        r = requests.get(url, headers=UA, timeout=TIMEOUT)
+        if r.status_code != 200:
+            return None
+        smiles = (r.text or "").strip()
+        if not smiles or smiles.lower().startswith("<!") or "page not found" in smiles.lower():
+            return None
+        return smiles
+    except requests.RequestException:
+        return None
+
+
+def pubchem_name_to_smiles(name: str) -> Optional[str]:
+    """Resolve compound name to SMILES via PubChem PUG REST."""
+    props = _pubchem_properties(name)
     if not props:
         return None
-    p0 = props[0]
     return (
-        p0.get("CanonicalSMILES")
-        or p0.get("IsomericSMILES")
-        or p0.get("ConnectivitySMILES")
-        or p0.get("SMILES")
+        props.get("CanonicalSMILES")
+        or props.get("IsomericSMILES")
+        or props.get("ConnectivitySMILES")
+        or props.get("SMILES")
     )
 
 
 def pubchem_lookup(name: str) -> dict[str, Any]:
-    smiles = pubchem_name_to_smiles(name)
+    """Resolve name → SMILES (+ MW / formula when available).
+
+    Tries PubChem (with retries), then NIH CACTUS as fallback.
+    """
+    name = name.strip()
+    if not name:
+        raise RuntimeError("Compound name required")
+
+    props = _pubchem_properties(name)
+    smiles = None
+    mw = None
+    formula = None
+    source = "PubChem"
+    if props:
+        smiles = (
+            props.get("CanonicalSMILES")
+            or props.get("IsomericSMILES")
+            or props.get("ConnectivitySMILES")
+            or props.get("SMILES")
+        )
+        mw_raw = props.get("MolecularWeight")
+        try:
+            mw = float(mw_raw) if mw_raw is not None else None
+        except (TypeError, ValueError):
+            mw = None
+        formula = props.get("MolecularFormula")
+
     if not smiles:
-        raise RuntimeError(f"No PubChem hit for '{name}'")
-    return {"name": name, "smiles": smiles, "source": "PubChem"}
+        smiles = cactus_name_to_smiles(name)
+        source = "NIH CACTUS"
+        mw = None
+        formula = None
+
+    if not smiles:
+        raise RuntimeError(f"No SMILES found for '{name}' (PubChem + CACTUS)")
+
+    return {
+        "name": name,
+        "smiles": smiles,
+        "source": source,
+        "mw": mw,
+        "formula": formula,
+    }
 
 
 # ── CIF → PDB ───────────────────────────────────────────────────

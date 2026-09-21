@@ -6,7 +6,11 @@
   <form method="post" action="/settings/lab">
     <div class="form-row">
       <div class="form-group"><label for="lab_name">Lab name</label><input id="lab_name" name="lab_name" value="{{ config.lab_name }}" required /></div>
-      <div class="form-group"><label for="lab_code">Lab code</label><input id="lab_code" name="lab_code" value="{{ config.lab_code }}" required /></div>
+      <div class="form-group">
+        <label for="lab_code">Lab code</label>
+        <input id="lab_code" name="lab_code" value="{{ config.lab_code }}" readonly title="Code identifies the on-disk lab folder and cannot be renamed here." />
+        <p class="form-hint">Folder key under <code>data/labs/&lt;CODE&gt;/</code> — create a new lab to change codes.</p>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label for="lab_type">Lab type</label><input id="lab_type" name="lab_type" value="{{ config.lab_type }}" /></div>
@@ -20,6 +24,7 @@
     <button class="btn btn-primary" type="submit">Save lab settings</button>
   </form>
 </div>
+
 <div class="card">
   <h2>Modules</h2>
   <p class="subtitle">Unchecked modules are hidden from navigation.</p>
@@ -30,6 +35,46 @@
       {% endfor %}
     </div>
     <div class="btn-group"><button class="btn btn-primary" type="submit">Update modules</button></div>
+  </form>
+</div>
+
+<div class="card accent">
+  <h2>Per-lab databases</h2>
+  <p class="subtitle">Each lab has an isolated SQLite file under <code>data/labs/&lt;CODE&gt;/lab.db</code>. Switching clears your session so credentials cannot leak across labs.</p>
+  {% if labs %}
+  <div class="table-wrap" style="margin-bottom:1rem">
+    <table class="data">
+      <thead><tr><th>Code</th><th>Name</th><th>Path</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for lab in labs %}
+        <tr>
+          <td><code>{{ lab.code }}</code></td>
+          <td>{{ lab.name }}</td>
+          <td><code style="font-size:0.75rem">{{ lab.path }}</code></td>
+          <td>{% if lab.is_active %}<span class="badge badge-ok">active</span>{% else %}<span class="badge">idle</span>{% endif %}</td>
+          <td>
+            {% if not lab.is_active %}
+            <form method="post" action="/settings/labs/switch" onsubmit="return confirm('Switch lab? You will be signed out.')">
+              <input type="hidden" name="lab_code" value="{{ lab.code }}" />
+              <button class="btn btn-secondary btn-sm" type="submit">Switch</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">No registry yet — it is created on first setup.</p>
+  {% endif %}
+  <h3>Create empty lab</h3>
+  <form method="post" action="/settings/labs/create">
+    <div class="form-row">
+      <div class="form-group"><label for="new_lab_code">Code</label><input id="new_lab_code" name="new_lab_code" placeholder="e.g. CORE" required /></div>
+      <div class="form-group"><label for="new_lab_name">Display name</label><input id="new_lab_name" name="new_lab_name" placeholder="Core Facility Lab" required /></div>
+    </div>
+    <button class="btn btn-accent" type="submit">Create lab DB</button>
   </form>
 </div>
 {% endblock %}

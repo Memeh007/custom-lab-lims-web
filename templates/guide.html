@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block page_heading %}Guide{% endblock %}
+{% block content %}
+<div class="guide-toc">
+  <a href="#purpose">Purpose</a>
+  <a href="#setup">Setup</a>
+  <a href="#labs">Per-lab DBs</a>
+  <a href="#compounds">Compounds / SMILES</a>
+  <a href="#modules">Modules</a>
+  <a href="#security">Security</a>
+  <a href="#backups">Backups</a>
+  <a href="#run">Run</a>
+</div>
+
+<div class="card guide-section" id="purpose">
+  <h2>Purpose</h2>
+  <p>Custom Lab LIMS Web is a lightweight, portfolio-ready Laboratory Information Management System for <strong>any lab type</strong>. It runs locally with FastAPI + Jinja2 + SQLite — no Streamlit, no cloud lock-in.</p>
+  <p class="muted">Use it to track samples, compounds, assays, protocols, proteins, and audit events with role-based access.</p>
+</div>
+
+<div class="card guide-section" id="setup">
+  <h2>First-run setup</h2>
+  <ol>
+    <li>Start the app and open <code>http://127.0.0.1:8000</code>.</li>
+    <li>Complete <strong>/setup</strong>: lab name, code, type, colors, timezone, admin account, module toggles.</li>
+    <li>Sign in. Demo seed passwords (if you ran <code>seed.py</code>) are documented in README — change them immediately.</li>
+  </ol>
+</div>
+
+<div class="card guide-section" id="labs">
+  <h2>Per-lab databases</h2>
+  <p>Each lab gets an isolated file:</p>
+  <pre>data/labs_registry.json
+data/labs/&lt;LAB_CODE&gt;/lab.db</pre>
+  <ul>
+    <li>On first setup, an existing legacy <code>data/lab_lims.db</code> is migrated into <code>data/labs/&lt;CODE&gt;/</code>.</li>
+    <li><strong>Settings → Per-lab databases</strong>: create empty labs or switch active lab.</li>
+    <li>Switching <strong>clears your session</strong> so users/credentials cannot leak across labs.</li>
+  </ul>
+</div>
+
+<div class="card guide-section" id="compounds">
+  <h2>Compounds &amp; SMILES</h2>
+  <p>In <strong>Compounds</strong>, use <em>Fetch SMILES</em> with a common name (e.g. aspirin). Lookup order:</p>
+  <ol>
+    <li>PubChem PUG REST (retries on transient errors)</li>
+    <li>NIH CACTUS Chemical Identifier Resolver fallback</li>
+  </ol>
+  <p>Hits autofill name, SMILES, and molecular weight when available. Bioinformatics has the same lookup helper.</p>
+</div>
+
+<div class="card guide-section" id="modules">
+  <h2>Modules</h2>
+  <ul>
+    <li><strong>Samples / Compounds / Experiments</strong> — inventory and assay records</li>
+    <li><strong>Husbandry</strong> — organism/colony/culture events (label is configurable)</li>
+    <li><strong>Protocols</strong> — Markdown-friendly text</li>
+    <li><strong>Proteins</strong> — RCSB download, UniProt, 3Dmol viewer</li>
+    <li><strong>Bioinformatics</strong> — local FASTA search, CIF→PDB, SMILES</li>
+    <li><strong>Analytics</strong> — Chart.js + CSV + ggplot2 script export</li>
+    <li><strong>Integrations</strong> — honest stubs (Vina optional — see docs)</li>
+    <li><strong>Users / Audit</strong> — roles and activity log</li>
+  </ul>
+  <p>Toggle visibility under Settings → Modules.</p>
+</div>
+
+<div class="card guide-section" id="security">
+  <h2>Security (local tool)</h2>
+  <ul>
+    <li>Default bind is <code>127.0.0.1</code> — not meant for the public internet.</li>
+    <li>Session secret lives in <code>data/.session_secret</code> (gitignored).</li>
+    <li>Databases and uploads are gitignored; never commit real lab data.</li>
+    <li>Upload paths are sanitized against directory traversal.</li>
+    <li>See <code>SECURITY.md</code> for hardening notes and optional HTTPS.</li>
+  </ul>
+</div>
+
+<div class="card guide-section" id="backups">
+  <h2>Backups</h2>
+  <p>Copy the active lab folder (and registry) while the app is stopped, or use SQLite <code>.backup</code>:</p>
+  <pre># Example
+cp -a data/labs/DEMO data/backups/DEMO-$(date +%Y%m%d)
+cp data/labs_registry.json data/backups/</pre>
+  <p class="muted">Also back up <code>uploads/</code> if you store structures there.</p>
+</div>
+
+<div class="card guide-section" id="run">
+  <h2>Run instructions</h2>
+  <pre>python3 -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app:app --reload --host 127.0.0.1 --port 8000</pre>
+  <p>Or use <code>run.sh</code> / <code>run.bat</code>. Full mirror: <code>GUIDE.md</code> in the repo root.</p>
+</div>
+{% endblock %}

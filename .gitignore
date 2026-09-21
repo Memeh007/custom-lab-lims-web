@@ -1,11 +1,41 @@
-﻿venv/
-__pycache__/
-*.pyc
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Secrets / local env
 .env
-data/*.db
+.env.*
 data/.session_secret
-uploads/structures/*
-!uploads/structures/.gitkeep
+
+# SQLite databases (legacy + per-lab)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+data/labs/
+data/labs_registry.json
+data/backups/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+
+# Uploads & logs (local)
 uploads/*
 !uploads/.gitkeep
+uploads/structures/*
+!uploads/structures/.gitkeep
+*.log
+
+# OS / IDE
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/

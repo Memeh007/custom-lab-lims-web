@@ -15,8 +15,11 @@ def seed_demo(db: Optional[Database] = None, reset: bool = False) -> Database:
         db = get_db()
 
     if reset and db.db_path.exists():
-        db.db_path.unlink()
-        db = get_db(db.db_path)
+        path = db.db_path
+        path.unlink()
+        from db import reset_db_cache
+        reset_db_cache()
+        db = get_db(path)
 
     modules = dict(DEFAULT_MODULES)
     db.save_lab_config(
@@ -30,6 +33,14 @@ def seed_demo(db: Optional[Database] = None, reset: bool = False) -> Database:
         lab_type="Biochemistry",
         husbandry_label="Cultures",
     )
+    try:
+        from labs import register_lab
+        from db import reset_db_cache
+        register_lab("DEMO", "Demo Biomedical Lab", make_active=True)
+        reset_db_cache()
+        db = get_db()
+    except Exception:
+        pass
 
     if not db.get_user_by_username("admin"):
         db.create_user("admin", hash_password("change-me-admin"), "admin", "Lab Admin")

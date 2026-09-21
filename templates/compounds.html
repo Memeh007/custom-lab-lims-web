@@ -6,23 +6,41 @@
   <div class="card">
     <h2>Add compound</h2>
     <form method="post" action="/compounds/add">
-      <div class="form-group"><label for="name">Name *</label><input id="name" name="name" required /></div>
+      <div class="form-group">
+        <label for="name">Name *</label>
+        <input id="name" name="name" required value="{{ draft_name or '' }}" />
+      </div>
       <div class="form-row">
         <div class="form-group"><label for="status">Status</label><input id="status" name="status" value="active" /></div>
-        <div class="form-group"><label for="mw">MW</label><input id="mw" name="mw" type="number" step="any" /></div>
+        <div class="form-group">
+          <label for="mw">MW</label>
+          <input id="mw" name="mw" type="number" step="any" value="{{ draft_mw if draft_mw is not none else '' }}" />
+        </div>
       </div>
-      <div class="form-group"><label for="smiles">SMILES</label><input id="smiles" name="smiles" placeholder="Optional" /></div>
+      <div class="form-group">
+        <label for="smiles">SMILES</label>
+        <input id="smiles" name="smiles" placeholder="Optional" value="{{ draft_smiles or '' }}" />
+      </div>
+      {% if draft_formula %}
+      <p class="form-hint">Formula from lookup: <code>{{ draft_formula }}</code></p>
+      {% endif %}
       <div class="form-group"><label for="notes">Notes</label><textarea id="notes" name="notes"></textarea></div>
       <button class="btn btn-primary" type="submit">Save compound</button>
     </form>
-    <hr style="border:none;border-top:1px solid #e2e8f0;margin:1.25rem 0" />
-    <h3>PubChem lookup</h3>
+    <hr class="soft" />
+    <h3>Fetch SMILES</h3>
+    <p class="form-hint">Looks up PubChem (with retries), then NIH CACTUS. Successful hits autofill the form above.</p>
     <form method="post" action="/compounds/pubchem">
       <div class="form-group"><label for="pc_name">Compound name</label><input id="pc_name" name="pc_name" placeholder="e.g. aspirin" /></div>
       <button class="btn btn-accent" type="submit">Fetch SMILES</button>
     </form>
     {% if pubchem_result %}
-    <p class="alert alert-success" style="margin-top:0.75rem">SMILES: <code>{{ pubchem_result.smiles }}</code></p>
+    <p class="alert alert-success" style="margin-top:0.75rem">
+      SMILES (<strong>{{ pubchem_result.source }}</strong>):
+      <code>{{ pubchem_result.smiles }}</code>
+      {% if pubchem_result.mw %} · MW {{ pubchem_result.mw }}{% endif %}
+      {% if pubchem_result.formula %} · {{ pubchem_result.formula }}{% endif %}
+    </p>
     {% endif %}
   </div>
   {% endif %}

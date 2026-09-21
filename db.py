@@ -6,12 +6,17 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from labs import resolve_active_db_path
+
 DEFAULT_DB_PATH = Path(__file__).resolve().parent / "data" / "lab_lims.db"
+_db_lock = threading.RLock()
+_db_cache: dict = {"instance": None, "path": None}
 
 DEFAULT_MODULES = {
     "samples": True,
@@ -701,5 +706,24 @@ class Database:
             }
 
 
+def reset_db_cache() -> None:
+    """Drop cached Database after lab switch / migrate."""
+    with _db_lock:
+        _db_cache["instance"] = None
+        _db_cache["path"] = None
+
+
 def get_db(db_path: Optional[Path | str] = None) -> Database:
-    return Database(db_path)
+    """Return Database for explicit path, or the active per-lab DB (cached)."""
+    if db_path is not None:
+        return Database(db_path)
+    path = resolve_active_db_path()
+    with _db_lock:
+        inst = _db_cache["instance"]
+        cached_path = _db_cache["path"]
+        if inst is not None and cached_path == path:
+            return inst
+        inst = Database(path)
+        _db_cache["instance"] = inst
+        _db_cache["path"] = path
+        return inst
