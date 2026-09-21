@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block page_heading %}Integrations{% endblock %}
+{% block content %}
+<p class="subtitle">Honest stubs — these tools are <strong>not bundled</strong>. Wire them when you install binaries locally.</p>
+<div class="stub-card">
+  <h3>AutoDock Vina / docking</h3>
+  <p>Not included. Install Vina separately and point a future runner at receptor/ligand PDBQT files. This LIMS stores compounds and structures only.</p>
+</div>
+<div class="stub-card">
+  <h3>OpenBabel</h3>
+  <p>Not included. Use OpenBabel CLI for format conversion outside this app. PubChem SMILES lookup is available in Compounds / Bioinformatics.</p>
+</div>
+<div class="stub-card">
+  <h3>AlphaFold / ColabFold</h3>
+  <p>Not included. Fetch experimental structures via RCSB or sequences via UniProt in the Proteins module. Predicted models can be uploaded later as local PDB/CIF.</p>
+</div>
+<div class="card accent">
+  <h2>What works today</h2>
+  <ul>
+    <li>RCSB PDB download + 3Dmol.js viewer</li>
+    <li>UniProt search / fetch</li>
+    <li>PubChem name → SMILES</li>
+    <li>Local FASTA search + CIF→PDB (Biopython)</li>
+    <li>Chart.js analytics + CSV / ggplot2 export</li>
+  </ul>
+</div>
+{% endblock %}

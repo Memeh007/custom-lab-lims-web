@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block page_heading %}Users{% endblock %}
+{% block content %}
+<div class="two-col">
+  <div class="card">
+    <h2>Add user</h2>
+    <form method="post" action="/users/add">
+      <div class="form-group"><label for="username">Username *</label><input id="username" name="username" required /></div>
+      <div class="form-group"><label for="display_name">Display name</label><input id="display_name" name="display_name" /></div>
+      <div class="form-group"><label for="password">Password *</label><input id="password" name="password" type="password" required minlength="6" /></div>
+      <div class="form-group">
+        <label for="role">Role</label>
+        <select id="role" name="role">
+          <option value="researcher">researcher</option>
+          <option value="viewer">viewer</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit">Create user</button>
+    </form>
+  </div>
+  <div class="card">
+    <h2>Accounts</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>User</th><th>Role</th><th>Active</th><th>Created</th><th></th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td><strong>{{ r.username }}</strong><br /><span class="muted">{{ r.display_name }}</span></td>
+            <td><span class="badge badge-role">{{ r.role }}</span></td>
+            <td>{{ 'yes' if r.active else 'no' }}</td>
+            <td>{{ r.created_at }}</td>
+            <td>
+              {% if r.username != user.username %}
+              <form method="post" action="/users/{{ r.id }}/toggle" style="display:inline">
+                <button class="btn btn-sm btn-secondary" type="submit">{{ 'Disable' if r.active else 'Enable' }}</button>
+              </form>
+              <form method="post" action="/users/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('Delete user?')">
+                <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

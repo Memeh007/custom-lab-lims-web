@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block page_heading %}Protocols{% endblock %}
+{% block content %}
+<div class="two-col">
+  {% if can_write %}
+  <div class="card">
+    <h2>New protocol</h2>
+    <form method="post" action="/protocols/add">
+      <div class="form-group"><label for="title">Title *</label><input id="title" name="title" required /></div>
+      <div class="form-group"><label for="category">Category</label><input id="category" name="category" value="general" /></div>
+      <div class="form-group"><label for="content">Content (Markdown)</label><textarea id="content" name="content" rows="10"></textarea></div>
+      <button class="btn btn-primary" type="submit">Save protocol</button>
+    </form>
+  </div>
+  {% endif %}
+  <div class="card">
+    <h2>Library</h2>
+    {% if rows %}
+      {% for r in rows %}
+      <div class="card accent" style="margin-bottom:0.75rem">
+        <div class="card-header">
+          <div>
+            <h3>{{ r.title }}</h3>
+            <span class="muted">{{ r.category }} · v{{ r.version }} · {{ r.author }}</span>
+          </div>
+          {% if can_write %}
+          <form method="post" action="/protocols/{{ r.id }}/delete" onsubmit="return confirm('Delete?')">
+            <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+          </form>
+          {% endif %}
+        </div>
+        <div class="protocol-body">{{ r.content or '' }}</div>
+      </div>
+      {% endfor %}
+    {% else %}<p class="empty-state">No protocols yet.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

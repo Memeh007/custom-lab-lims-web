@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block page_heading %}Audit log{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Recent events</h2>
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Timestamp</th><th>User</th><th>Role</th><th>Action</th><th>Details</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>{{ r.timestamp }}</td>
+          <td>{{ r.username or '—' }}</td>
+          <td>{{ r.role or '—' }}</td>
+          <td>{{ r.action }}</td>
+          <td>{{ r.details or '' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty-state">No audit events.</p>{% endif %}
+</div>
+{% endblock %}

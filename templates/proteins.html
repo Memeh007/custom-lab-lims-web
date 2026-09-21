@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block page_heading %}Proteins{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/3dmol@2.4.2/build/3Dmol-min.js"></script>
+{% endblock %}
+{% block content %}
+<div class="two-col">
+  <div>
+    {% if can_write %}
+    <div class="card">
+      <h2>Fetch from RCSB</h2>
+      <form method="post" action="/proteins/rcsb">
+        <div class="form-group"><label for="pdb_id">PDB ID</label><input id="pdb_id" name="pdb_id" placeholder="e.g. 1A3N" required /></div>
+        <button class="btn btn-primary" type="submit">Download &amp; save</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>UniProt search</h2>
+      <form method="get" action="/proteins">
+        <div class="form-group"><label for="q">Query</label><input id="q" name="q" value="{{ query or '' }}" placeholder="insulin AND organism_name:human" /></div>
+        <button class="btn btn-accent" type="submit">Search</button>
+      </form>
+      {% if uniprot_hits %}
+      <div class="table-wrap" style="margin-top:0.75rem">
+        <table class="data">
+          <thead><tr><th>Accession</th><th>Name</th><th>Organism</th><th></th></tr></thead>
+          <tbody>
+          {% for h in uniprot_hits %}
+            <tr>
+              <td><code>{{ h.accession }}</code></td>
+              <td>{{ h.name }}</td>
+              <td>{{ h.organism or '—' }}</td>
+              <td>
+                <form method="post" action="/proteins/uniprot">
+                  <input type="hidden" name="accession" value="{{ h.accession }}" />
+                  <button class="btn btn-sm btn-primary" type="submit">Fetch</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+    <div class="card">
+      <h2>Protein library</h2>
+      {% if rows %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Name</th><th>Accession</th><th>Source</th><th></th></tr></thead>
+          <tbody>
+          {% for r in rows %}
+            <tr>
+              <td><strong>{{ r.name }}</strong><br /><span class="muted">{{ r.organism or '' }}</span></td>
+              <td>{{ r.accession or '—' }}</td>
+              <td>{{ r.source or '—' }}</td>
+              <td>
+                <a class="btn btn-sm btn-secondary" href="/proteins?view={{ r.id }}">View</a>
+                {% if can_write %}
+                <form method="post" action="/proteins/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('Delete?')">
+                  <button class="btn btn-danger btn-sm" type="submit">Del</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}<p class="empty-state">No proteins yet.</p>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <h2>3D viewer{% if viewing %} — {{ viewing.name }}{% endif %}</h2>
+    {% if structure_text %}
+    <div id="molviewer" class="viewer-box"></div>
+    <p class="form-hint" style="margin-top:0.5rem">Rendered with 3Dmol.js (CDN). Format: {{ structure_fmt }}</p>
+    {% elif viewing %}
+    <p class="muted">No local structure file for this entry. Sequence length: {{ (viewing.sequence|length) if viewing.sequence else 'n/a' }}</p>
+    {% if viewing.sequence %}<pre style="max-height:200px;overflow:auto">{{ viewing.sequence[:800] }}{% if viewing.sequence|length > 800 %}…{% endif %}</pre>{% endif %}
+    {% else %}
+    <p class="empty-state">Select a protein with a local PDB/CIF to preview.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{% if structure_text %}
+<script>
+  (function() {
+    const element = document.getElementById('molviewer');
+    const config = { backgroundColor: '0b1220' };
+    const viewer = $3Dmol.createViewer(element, config);
+    const data = {{ structure_text | tojson }};
+    const fmt = {{ structure_fmt | tojson }};
+    viewer.addModel(data, fmt);
+    viewer.setStyle({}, {cartoon: {color: 'spectrum'}});
+    viewer.zoomTo();
+    viewer.render();
+  })();
+</script>
+{% endif %}
+{% endblock %}

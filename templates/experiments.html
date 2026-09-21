@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block page_heading %}Experiments / Assays{% endblock %}
+{% block content %}
+<div class="two-col">
+  {% if can_write %}
+  <div class="card">
+    <h2>Log assay</h2>
+    <form method="post" action="/experiments/add">
+      <div class="form-group">
+        <label for="compound_id">Compound</label>
+        <select id="compound_id" name="compound_id">
+          <option value="">— none —</option>
+          {% for c in compounds %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="assay_type">Assay type</label>
+          <input id="assay_type" name="assay_type" list="assay_types" value="viability" />
+          <datalist id="assay_types">
+            {% for t in assay_types %}<option value="{{ t }}"></option>{% endfor %}
+          </datalist>
+        </div>
+        <div class="form-group"><label for="assay_date">Date</label><input id="assay_date" name="assay_date" type="date" value="{{ today }}" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label for="dose">Dose</label><input id="dose" name="dose" type="number" step="any" /></div>
+        <div class="form-group"><label for="survival_percent">Metric value</label><input id="survival_percent" name="survival_percent" type="number" step="any" /></div>
+      </div>
+      <div class="form-group"><label for="researcher">Researcher</label><input id="researcher" name="researcher" value="{{ user.display_name }}" /></div>
+      <div class="form-group"><label for="notes">Notes</label><textarea id="notes" name="notes"></textarea></div>
+      <button class="btn btn-primary" type="submit">Save assay</button>
+    </form>
+  </div>
+  {% endif %}
+  <div class="card">
+    <h2>Assay log</h2>
+    {% if rows %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Date</th><th>Type</th><th>Compound</th><th>Dose</th><th>Metric</th><th>Researcher</th>{% if can_write %}<th></th>{% endif %}</tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.assay_date }}</td>
+            <td><span class="badge">{{ r.assay_type }}</span></td>
+            <td>{{ r.compound_name or '—' }}</td>
+            <td>{{ r.dose if r.dose is not none else '—' }}</td>
+            <td>{{ r.survival_percent if r.survival_percent is not none else '—' }}</td>
+            <td>{{ r.researcher or '—' }}</td>
+            {% if can_write %}
+            <td>
+              <form method="post" action="/experiments/{{ r.id }}/delete" onsubmit="return confirm('Delete?')">
+                <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="empty-state">No assays yet.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

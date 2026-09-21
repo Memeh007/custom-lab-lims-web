@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block page_heading %}Settings{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Lab identity &amp; theme</h2>
+  <form method="post" action="/settings/lab">
+    <div class="form-row">
+      <div class="form-group"><label for="lab_name">Lab name</label><input id="lab_name" name="lab_name" value="{{ config.lab_name }}" required /></div>
+      <div class="form-group"><label for="lab_code">Lab code</label><input id="lab_code" name="lab_code" value="{{ config.lab_code }}" required /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label for="lab_type">Lab type</label><input id="lab_type" name="lab_type" value="{{ config.lab_type }}" /></div>
+      <div class="form-group"><label for="husbandry_label">Husbandry label</label><input id="husbandry_label" name="husbandry_label" value="{{ config.husbandry_label }}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label for="primary_color">Primary color</label><input id="primary_color" name="primary_color" type="color" value="{{ config.primary_color }}" /></div>
+      <div class="form-group"><label for="accent_color">Accent color</label><input id="accent_color" name="accent_color" type="color" value="{{ config.accent_color }}" /></div>
+    </div>
+    <div class="form-group"><label for="timezone">Timezone</label><input id="timezone" name="timezone" value="{{ config.timezone }}" /></div>
+    <button class="btn btn-primary" type="submit">Save lab settings</button>
+  </form>
+</div>
+<div class="card">
+  <h2>Modules</h2>
+  <p class="subtitle">Unchecked modules are hidden from navigation.</p>
+  <form method="post" action="/settings/modules">
+    <div class="checkbox-grid">
+      {% for key, enabled in config.modules.items() %}
+      <label><input type="checkbox" name="modules" value="{{ key }}" {% if enabled %}checked{% endif %} /> {{ key }}</label>
+      {% endfor %}
+    </div>
+    <div class="btn-group"><button class="btn btn-primary" type="submit">Update modules</button></div>
+  </form>
+</div>
+{% endblock %}

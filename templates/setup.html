@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Lab Setup — Custom Lab LIMS{% endblock %}
+{% block auth_body %}
+<div class="auth-page">
+  <div class="auth-card wide">
+    {% include "_flashes.html" %}
+    <h1>Lab Setup</h1>
+    <p class="welcome">
+      Welcome to <strong>Custom Lab LIMS</strong>. Configure any lab type — cell culture,
+      microbiology, computational biology, clinical, materials, and more.
+    </p>
+    <form method="post" action="/setup">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lab_name">Lab name *</label>
+          <input id="lab_name" name="lab_name" type="text" required placeholder="e.g. Demo Biomedical Lab" />
+        </div>
+        <div class="form-group">
+          <label for="lab_code">Lab code *</label>
+          <input id="lab_code" name="lab_code" type="text" required placeholder="e.g. DEMO" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lab_type">Lab type *</label>
+          <select id="lab_type" name="lab_type">
+            {% for t in lab_types %}
+            <option value="{{ t }}">{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="lab_type_other">Or enter a custom lab type</label>
+          <input id="lab_type_other" name="lab_type_other" type="text" placeholder="Free text if not in the list" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="husbandry_label">Organism / culture module label</label>
+          <select id="husbandry_label" name="husbandry_label">
+            {% for h in husbandry_labels %}
+            <option value="{{ h }}">{{ h }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="husbandry_custom">Custom module label (optional)</label>
+          <input id="husbandry_custom" name="husbandry_custom" type="text" placeholder="e.g. Bioreactors" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="primary_color">Primary color</label>
+          <input id="primary_color" name="primary_color" type="color" value="#2563eb" />
+        </div>
+        <div class="form-group">
+          <label for="accent_color">Accent color</label>
+          <input id="accent_color" name="accent_color" type="color" value="#0d9488" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="timezone">Timezone</label>
+          <input id="timezone" name="timezone" type="text" value="America/Los_Angeles" />
+        </div>
+        <div class="form-group">
+          <label for="logo_path">Logo path (optional)</label>
+          <input id="logo_path" name="logo_path" type="text" placeholder="uploads/logo.png" />
+        </div>
+      </div>
+      <h3 style="margin-top:1.25rem;color:#0f172a">Admin account</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="admin_user">Admin username *</label>
+          <input id="admin_user" name="admin_user" type="text" value="admin" required />
+        </div>
+        <div class="form-group">
+          <label for="admin_pw">Admin password *</label>
+          <input id="admin_pw" name="admin_pw" type="password" required minlength="6" placeholder="At least 6 characters" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="admin_pw2">Confirm password *</label>
+        <input id="admin_pw2" name="admin_pw2" type="password" required minlength="6" />
+      </div>
+      <h3 style="margin-top:1.25rem;color:#0f172a">Modules (can change later)</h3>
+      <div class="checkbox-grid" style="margin-bottom:1.25rem">
+        {% for key in module_keys %}
+        <label><input type="checkbox" name="modules" value="{{ key }}" checked /> {{ key }}</label>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-primary">Create lab</button>
+    </form>
+    <p class="footer-note">Tip: <code>python seed.py --reset</code> for Demo Biomedical Lab.</p>
+  </div>
+</div>
+{% endblock %}

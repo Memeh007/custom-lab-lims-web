@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}{{ config.lab_name if config else 'Custom Lab LIMS' }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    :root {
+      --lab-primary: {{ (config.primary_color if config else '#2563eb') }};
+      --lab-accent: {{ (config.accent_color if config else '#0d9488') }};
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+{% if user and config %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <p class="brand-name">{{ config.lab_name }}</p>
+      <div class="brand-code">{{ config.lab_code }} · {{ config.lab_type }}</div>
+    </div>
+    <ul class="nav-list">
+      {% for item in nav %}
+      <li><a href="{{ item.href }}" class="{% if item.key == active %}active{% endif %}">{{ item.label }}</a></li>
+      {% endfor %}
+    </ul>
+    <div class="sidebar-footer">
+      <span class="user-name">{{ user.display_name }}</span>
+      <span>{{ user.role }}</span><br />
+      <a href="/logout" style="color:#93c5fd">Sign out</a>
+    </div>
+  </aside>
+  <div class="main-col">
+    <header class="topbar">
+      <div>
+        <p class="topbar-title">{% block page_heading %}Dashboard{% endblock %}</p>
+        <div class="topbar-meta">{{ config.lab_name }} · {{ config.timezone }}</div>
+      </div>
+      <div class="btn-group">
+        {% block top_actions %}{% endblock %}
+      </div>
+    </header>
+    <main class="content">
+      {% include "_flashes.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% else %}
+  {% block auth_body %}{% endblock %}
+{% endif %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

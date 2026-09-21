@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block page_heading %}{{ h_label }}{% endblock %}
+{% block content %}
+<div class="two-col">
+  {% if can_write %}
+  <div class="card">
+    <h2>Log event</h2>
+    <form method="post" action="/husbandry/add">
+      <div class="form-group"><label for="event_date">Date</label><input id="event_date" name="event_date" type="date" value="{{ today }}" /></div>
+      <div class="form-group"><label for="organism_label">Label / vessel *</label><input id="organism_label" name="organism_label" required /></div>
+      <div class="form-row">
+        <div class="form-group"><label for="count">Count</label><input id="count" name="count" type="number" value="0" /></div>
+        <div class="form-group"><label for="researcher">Researcher</label><input id="researcher" name="researcher" value="{{ user.display_name }}" /></div>
+      </div>
+      <div class="form-group">
+        <label for="related_compound_id">Related compound</label>
+        <select id="related_compound_id" name="related_compound_id">
+          <option value="">— none —</option>
+          {% for c in compounds %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label for="notes">Notes</label><textarea id="notes" name="notes"></textarea></div>
+      <button class="btn btn-primary" type="submit">Save event</button>
+    </form>
+  </div>
+  {% endif %}
+  <div class="card">
+    <h2>{{ h_label }} events</h2>
+    {% if rows %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Date</th><th>Label</th><th>Count</th><th>Compound</th><th>Notes</th>{% if can_write %}<th></th>{% endif %}</tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.event_date }}</td>
+            <td><strong>{{ r.organism_label }}</strong></td>
+            <td>{{ r.count }}</td>
+            <td>{{ r.compound_name or '—' }}</td>
+            <td>{{ r.notes or '' }}</td>
+            {% if can_write %}
+            <td>
+              <form method="post" action="/husbandry/{{ r.id }}/delete" onsubmit="return confirm('Delete?')">
+                <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="empty-state">No events yet.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

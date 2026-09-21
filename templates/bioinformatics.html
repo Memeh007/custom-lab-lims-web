@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block page_heading %}Bioinformatics{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Local FASTA search</h2>
+  <p class="subtitle">Upload a FASTA and search a query motif / subsequence locally.</p>
+  <form method="post" action="/bioinformatics/fasta" enctype="multipart/form-data">
+    <div class="form-group"><label for="fasta">FASTA file</label><input id="fasta" name="fasta" type="file" accept=".fa,.fasta,.txt" required /></div>
+    <div class="form-group"><label for="query">Query sequence</label><input id="query" name="query" required placeholder="e.g. MKTAYIAK" /></div>
+    <button class="btn btn-primary" type="submit">Search</button>
+  </form>
+  {% if fasta_results %}
+  <div class="table-wrap" style="margin-top:1rem">
+    <table class="data">
+      <thead><tr><th>Subject</th><th>Score</th><th>Method</th><th>Start</th><th>Len</th></tr></thead>
+      <tbody>
+      {% for r in fasta_results %}
+        <tr>
+          <td>{{ r.subject }}</td>
+          <td>{{ r.score }}</td>
+          <td>{{ r.method }}</td>
+          <td>{{ r.exact_start if r.exact_start is not none else '—' }}</td>
+          <td>{{ r.subject_len }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+<div class="two-col">
+  <div class="card">
+    <h2>CIF → PDB</h2>
+    <form method="post" action="/bioinformatics/cif2pdb" enctype="multipart/form-data">
+      <div class="form-group"><label for="cif">mmCIF file</label><input id="cif" name="cif" type="file" accept=".cif,.mmcif" required /></div>
+      <button class="btn btn-accent" type="submit">Convert</button>
+    </form>
+    {% if cif_error %}<div class="alert alert-error">{{ cif_error }}</div>{% endif %}
+  </div>
+  <div class="card">
+    <h2>PubChem name → SMILES</h2>
+    <form method="post" action="/bioinformatics/pubchem">
+      <div class="form-group"><label for="name">Compound name</label><input id="name" name="name" required placeholder="caffeine" /></div>
+      <button class="btn btn-primary" type="submit">Lookup</button>
+    </form>
+    {% if smiles_result %}
+    <p class="alert alert-success" style="margin-top:0.75rem"><strong>{{ smiles_result.name }}</strong><br /><code>{{ smiles_result.smiles }}</code></p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

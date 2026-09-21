@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block page_heading %}Analytics{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<p class="subtitle">Chart.js graphs from assays / compounds / samples. Export CSV and an R ggplot2 script.</p>
+{% if assays %}
+<div class="card">
+  <h2>Assay metric over time</h2>
+  <div class="chart-box"><canvas id="chartAssay"></canvas></div>
+</div>
+<div class="card">
+  <h2>Mean metric by compound</h2>
+  <div class="chart-box"><canvas id="chartCompound"></canvas></div>
+</div>
+{% else %}
+<div class="alert alert-info">No assay data yet.</div>
+{% endif %}
+<div class="two-col">
+  <div class="card">
+    <h2>Compounds by status</h2>
+    {% if compounds %}<div class="chart-box"><canvas id="chartStatus"></canvas></div>
+    {% else %}<p class="empty-state">No compounds.</p>{% endif %}
+  </div>
+  <div class="card">
+    <h2>Sample quantities</h2>
+    {% if samples %}<div class="chart-box"><canvas id="chartSamples"></canvas></div>
+    {% else %}<p class="empty-state">No samples.</p>{% endif %}
+  </div>
+</div>
+<div class="card">
+  <h2>Export</h2>
+  <div class="btn-group">
+    <a class="btn btn-primary" href="/analytics/export.csv">Download assays CSV</a>
+    <a class="btn btn-secondary" href="/analytics/plot_assays.R">Download R ggplot2 script</a>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const assays = {{ assays_json | safe }};
+const compounds = {{ compounds_json | safe }};
+const samples = {{ samples_json | safe }};
+const palette = ['#2563eb','#0d9488','#d97706','#dc2626','#7c3aed','#0891b2'];
+
+if (assays.length && document.getElementById('chartAssay')) {
+  const byType = {};
+  assays.forEach(a => {
+    const t = a.assay_type || 'other';
+    if (!byType[t]) byType[t] = [];
+    byType[t].push({x: a.assay_date, y: a.survival_percent});
+  });
+  new Chart(document.getElementById('chartAssay'), {
+    type: 'scatter',
+    data: {
+      datasets: Object.keys(byType).map((k,i) => ({
+        label: k,
+        data: byType[k],
+        backgroundColor: palette[i % palette.length],
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { type: 'category', title: {display:true, text:'Date', color:'#0f172a'}, ticks:{color:'#334155'} },
+        y: { title: {display:true, text:'Metric value', color:'#0f172a'}, ticks:{color:'#334155'} }
+      },
+      plugins: { legend: { labels: { color: '#0f172a' } } }
+    }
+  });
+
+  const means = {};
+  assays.forEach(a => {
+    if (!a.compound_name) return;
+    if (!means[a.compound_name]) means[a.compound_name] = [];
+    if (a.survival_percent != null) means[a.compound_name].push(a.survival_percent);
+  });
+  const labels = Object.keys(means);
+  const vals = labels.map(l => means[l].reduce((s,v)=>s+v,0)/means[l].length);
+  new Chart(document.getElementById('chartCompound'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Mean metric', data: vals, backgroundColor: '#2563eb' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { ticks:{color:'#334155'} },
+        y: { title:{display:true,text:'Mean metric',color:'#0f172a'}, ticks:{color:'#334155'} }
+      },
+      plugins: { legend: { labels: { color: '#0f172a' } } }
+    }
+  });
+}
+
+if (compounds.length && document.getElementById('chartStatus')) {
+  const counts = {};
+  compounds.forEach(c => { counts[c.status||'unknown'] = (counts[c.status||'unknown']||0)+1; });
+  new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{ data: Object.values(counts), backgroundColor: palette }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#0f172a' } } } }
+  });
+}
+
+if (samples.length && document.getElementById('chartSamples')) {
+  new Chart(document.getElementById('chartSamples'), {
+    type: 'bar',
+    data: {
+      labels: samples.map(s => s.name),
+      datasets: [{ label: 'Quantity', data: samples.map(s => s.quantity), backgroundColor: '#0d9488' }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales: { x:{ticks:{color:'#334155'}}, y:{ticks:{color:'#334155'}} },
+      plugins: { legend: { labels: { color: '#0f172a' } } }
+    }
+  });
+}
+</script>
+{% endblock %}

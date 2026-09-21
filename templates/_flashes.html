@@ -1,0 +1,7 @@
+{% if flashes %}
+<div class="flash-list">
+  {% for f in flashes %}
+  <div class="alert alert-{{ f.category }}">{{ f.message }}</div>
+  {% endfor %}
+</div>
+{% endif %}

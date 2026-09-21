@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block page_heading %}Compounds{% endblock %}
+{% block content %}
+<div class="two-col">
+  {% if can_write %}
+  <div class="card">
+    <h2>Add compound</h2>
+    <form method="post" action="/compounds/add">
+      <div class="form-group"><label for="name">Name *</label><input id="name" name="name" required /></div>
+      <div class="form-row">
+        <div class="form-group"><label for="status">Status</label><input id="status" name="status" value="active" /></div>
+        <div class="form-group"><label for="mw">MW</label><input id="mw" name="mw" type="number" step="any" /></div>
+      </div>
+      <div class="form-group"><label for="smiles">SMILES</label><input id="smiles" name="smiles" placeholder="Optional" /></div>
+      <div class="form-group"><label for="notes">Notes</label><textarea id="notes" name="notes"></textarea></div>
+      <button class="btn btn-primary" type="submit">Save compound</button>
+    </form>
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:1.25rem 0" />
+    <h3>PubChem lookup</h3>
+    <form method="post" action="/compounds/pubchem">
+      <div class="form-group"><label for="pc_name">Compound name</label><input id="pc_name" name="pc_name" placeholder="e.g. aspirin" /></div>
+      <button class="btn btn-accent" type="submit">Fetch SMILES</button>
+    </form>
+    {% if pubchem_result %}
+    <p class="alert alert-success" style="margin-top:0.75rem">SMILES: <code>{{ pubchem_result.smiles }}</code></p>
+    {% endif %}
+  </div>
+  {% endif %}
+  <div class="card">
+    <h2>Library</h2>
+    {% if rows %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Name</th><th>Status</th><th>MW</th><th>SMILES</th>{% if can_write %}<th></th>{% endif %}</tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td><strong>{{ r.name }}</strong></td>
+            <td><span class="badge">{{ r.status }}</span></td>
+            <td>{{ r.mw or '—' }}</td>
+            <td><code style="font-size:0.75rem">{{ r.smiles or '—' }}</code></td>
+            {% if can_write %}
+            <td>
+              <form method="post" action="/compounds/{{ r.id }}/delete" onsubmit="return confirm('Delete?')">
+                <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="empty-state">No compounds yet.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}
